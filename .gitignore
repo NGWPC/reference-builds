@@ -234,8 +234,5 @@ Pipfile
 .vscode
 .DS_Store
 
-# configs
-configs/
-
 # logs
 logs/
