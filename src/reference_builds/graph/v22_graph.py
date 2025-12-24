@@ -13,6 +13,37 @@ import rustworkx as rx
 from tqdm import tqdm
 
 
+def _find_outlets_by_hydroseq(reference_flowpaths: pl.DataFrame) -> list[str]:
+    """Find outlets for the river using hydroseq.
+
+    Parameters
+    ----------
+    reference_flowpaths : pl.DataFrame
+        The flowpath reference
+
+    Returns
+    -------
+    list[str]
+        All outlets from the reference
+    """
+    df_pl = reference_flowpaths.select(pl.col(["flowpath_id", "hydroseq", "dnhydroseq", "totdasqkm"]))
+
+    df_with_str_id = df_pl.with_columns(
+        pl.col("flowpath_id").cast(pl.Float64).cast(pl.Int64).cast(pl.Utf8).alias("flowpath_id_str")
+    )
+
+    hydroseq_set: set[Any] = set(df_pl["hydroseq"].to_list())
+
+    outlets_df = df_with_str_id.filter(
+        (pl.col("dnhydroseq") == 0) | ~pl.col("dnhydroseq").is_in(hydroseq_set)
+    ).sort("flowpath_id_str")  # dnhydroseq is 0, or doesn't exist in hydroseq
+
+    # outlets_sorted = outlets_df.sort("totdasqkm", descending=True) # Commenting out until production
+    outlets: list[str] = outlets_df["flowpath_id_str"].to_list()
+
+    return outlets
+
+
 def create_matrix(fp: pl.LazyFrame, network: pl.LazyFrame) -> tuple[rx.PyDiGraph, dict[str, int]]:
     """
     Create a directed graph from flowpaths and network dataframes.
@@ -67,9 +98,8 @@ def build_v22_graph(file_path: Path) -> tuple[rx.PyDiGraph, dict[str, int]]:
         tuple[1]: Mapping of flowpath IDs to graph node indices
     """
     # Read hydrofabric geopackage using sqlite
-    uri = "sqlite://" + str(file_path)
     query = "SELECT id,toid FROM flowpaths"
-    conn = sqlite3.connect(uri)
+    conn = sqlite3.connect(file_path)
     fp = pl.read_database(query=query, connection=conn)
     fp = fp.extend(pl.DataFrame({"id": ["wb-0"], "toid": [None]})).lazy()
     query = "SELECT id,toid FROM network"
