@@ -1,6 +1,17 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
+
+[tool.hatch]
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/reference_builds/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/reference_builds"]
+
 [project]
 name = "reference-builds"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Building Reference Datasets + Processing Ancillary Data"
 readme = "README.md"
 requires-python = ">=3.12"
