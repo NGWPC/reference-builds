@@ -1,4 +1,4 @@
-"""An end-to-end build file that will take the v2.2 Hydrofabric for PRVI and turn it into the reference fabric"""
+"""An end-to-end build file that will take the NHD PRVI and turn it into a reference fabric"""
 
 import argparse
 from collections.abc import Callable
