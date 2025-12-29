@@ -23,7 +23,7 @@ def _load_and_concat_layers(gpkg_files: list[Path], layer_name: str) -> gpd.GeoD
     return pd.concat(gdfs, ignore_index=True)
 
 
-def download_reference_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
+def download_nhd_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
     """Opens local / downloads reference materials for the hydrofabric build process
 
     Parameters

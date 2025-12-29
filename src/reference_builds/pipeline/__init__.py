@@ -1,5 +1,5 @@
-from .download import download_reference_data
+from .download import download_nhd_data
 
 __all__ = [
-    "download_reference_data",
+    "download_nhd_data",
 ]

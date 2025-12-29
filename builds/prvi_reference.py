@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from reference_builds.configs import PRVI
 from reference_builds.logs import setup_logging
-from reference_builds.pipeline import download_reference_data
+from reference_builds.pipeline import download_nhd_data
 from reference_builds.task_instance import TaskInstance
 
 logger = setup_logging()
@@ -160,7 +160,7 @@ def main() -> int:
         raise TypeError("Config file not specified.") from e
 
     with LocalRunner(config) as runner:
-        runner.run_task(task_id="download", python_callable=download_reference_data, op_kwargs={})
+        runner.run_task(task_id="download", python_callable=download_nhd_data, op_kwargs={})
 
         print("Pipeline completed")
         print("=" * 60)
