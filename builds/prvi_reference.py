@@ -1,7 +1,5 @@
 """An end-to-end build file that will take the v2.2 Hydrofabric for PRVI and turn it into the reference fabric"""
 
-"""Local runner for building the NGWPC hydrofabric"""
-
 import argparse
 from collections.abc import Callable
 from datetime import datetime
@@ -11,6 +9,7 @@ from pydantic import ValidationError
 
 from reference_builds.configs import PRVI
 from reference_builds.logs import setup_logging
+from reference_builds.pipeline import download_reference_data
 from reference_builds.task_instance import TaskInstance
 
 logger = setup_logging()

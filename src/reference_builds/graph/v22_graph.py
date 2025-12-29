@@ -7,6 +7,7 @@ https://github.com/DeepGroundwater/ddr/blob/ab4c3962c2c119e6a9182a77f2a9faceec19
 
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 import rustworkx as rx
