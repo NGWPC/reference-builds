@@ -18,14 +18,26 @@ class PRVI(BaseModel):
         description="The directory for output files to be saved from Hydrofabric builds",
     )
 
-    input_file_regex: Path = Field(
-        default_factory=lambda data: data["output_dir"] / "PRVI/NHDPLUS_H_2101_HU4_GPKG.gpkg",
+    input_file_regex: str = Field(
+        default="PRVI/NHDPLUS_H_21*_HU4_GPKG",
         description="input file to be converted into a reference product",
     )
 
     crs: str = Field(
         default="EPSG:6566",
         description="Coordinate Reference System for the PRVI reference builds. Defaults to https://epsg.io/6566",
+    )
+
+    permitted_fcodes: list[str] = Field(
+        default_factory=lambda: [
+            "Stream/River: Hydrographic Category = Intermittent",
+            "Artificial Path",
+            "Connector",
+            "Stream/River: Hydrographic Category = Perennial",
+            "Canal/Ditch",
+            "Canal Ditch: Canal Ditch Type = Stormwater",
+        ],
+        description="The permitted fcode descriptions for the reference",
     )
 
     output_reference_divides_path: Path = Field(
