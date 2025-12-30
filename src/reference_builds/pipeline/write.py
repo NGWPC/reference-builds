@@ -43,7 +43,7 @@ def write_reference(**context: dict[str, Any]) -> dict[str, Any]:
         cfg.output_reference_gpkg_path.unlink(missing_ok=True)
         final_flowpaths.to_file(cfg.output_reference_gpkg_path, layer="reference_flowpaths", driver="GPKG")
         final_divides.to_file(cfg.output_reference_gpkg_path, layer="reference_divides", driver="GPKG")
-        logger.info(f"write_nhd_data task: wrote geopackage layers to {cfg.output_reference_gpkg_path}")
+        logger.info(f"write_reference task: wrote geopackage layers to {cfg.output_reference_gpkg_path}")
 
     final_flowpaths.to_parquet(cfg.output_reference_flowpaths_path)
     final_divides.to_parquet(cfg.output_reference_divides_path)
