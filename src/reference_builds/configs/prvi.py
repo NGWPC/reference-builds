@@ -28,6 +28,12 @@ class PRVI(BaseModel):
         description="Coordinate Reference System for the PRVI reference builds. Defaults to https://epsg.io/6566",
     )
 
+    vpu_id: str = Field(default="21", description="The VPUID for PRVI")
+
+    write_gpkg: bool = Field(
+        default=True, description="Writes a geopackage in addition to parquet files for output"
+    )
+
     permitted_fcodes: list[str] = Field(
         default_factory=lambda: [
             "Stream/River: Hydrographic Category = Intermittent",
@@ -38,6 +44,11 @@ class PRVI(BaseModel):
             "Canal Ditch: Canal Ditch Type = Stormwater",
         ],
         description="The permitted fcode descriptions for the reference",
+    )
+
+    output_reference_gpkg_path: Path = Field(
+        default_factory=lambda data: data["output_dir"] / f"prvi_{__version__}_reference.gpkg",
+        description="Save directory for the PRVI reference (in .gpkg form)",
     )
 
     output_reference_divides_path: Path = Field(
