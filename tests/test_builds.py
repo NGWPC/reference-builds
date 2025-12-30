@@ -34,7 +34,7 @@ class TestTraceAttributes:
             "pathlength",
             "dnhydroseq",
             "hydroseq",
-            "stream_order",
+            "streamorder",
             "fcode_description",
             "geometry",
         }
@@ -104,7 +104,7 @@ class TestTraceAttributes:
 
         # Headwaters are 85000100000001 and 85000100000002
         headwater_rows = result[result["flowpath_id"].isin(["85000100000001", "85000100000002"])]
-        assert (headwater_rows["stream_order"] == 1).all()
+        assert (headwater_rows["streamorder"] == 1).all()
 
     def test_strahler_order_increases_at_confluence(
         self,
@@ -118,7 +118,7 @@ class TestTraceAttributes:
 
         # Node 3 is confluence of two order-1 streams, should be order 2
         confluence_row = result[result["flowpath_id"] == "85000100000003"]
-        assert confluence_row["stream_order"].iloc[0] == 2
+        assert confluence_row["streamorder"].iloc[0] == 2
 
     def test_totdasqkm_accumulates_downstream(
         self,
@@ -350,7 +350,7 @@ class TestEdgeCases:
         result = _trace_attributes(graph, node_indices, single_flowpath, single_divide, "21")
 
         assert len(result) == 1
-        assert result["stream_order"].iloc[0] == 1
+        assert result["streamorder"].iloc[0] == 1
         assert result["dnhydroseq"].iloc[0] == 0
         assert result["pathlength"].iloc[0] == 0.0
         assert result["totdasqkm"].iloc[0] == 1.0

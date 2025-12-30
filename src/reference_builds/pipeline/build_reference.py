@@ -215,7 +215,7 @@ def _trace_attributes(
             "pathlength": pathlengths,
             "dnhydroseq": dnhydroseqs,
             "hydroseq": hydroseqs,
-            "stream_order": streamorders,
+            "streamorder": streamorders,
             "fcode_description": fcodes,
         },
         geometry=geometries,
