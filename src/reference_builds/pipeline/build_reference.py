@@ -146,7 +146,7 @@ def _trace_attributes(
                     key=lambda idx: (graph[idx]["pathlength"], graph[idx]["totdasqkm"]),
                 )
 
-    # Assign dnhydroseq based on graph edges
+    # Assign dnhydroseq and flowpath_toid based on graph edges
     for node_idx in graph.node_indices():
         out_edges = graph.out_edges(node_idx)
         downstream_nodes = [tgt_idx for _, tgt_idx, _ in out_edges]
@@ -154,8 +154,10 @@ def _trace_attributes(
         if downstream_nodes:
             downstream_idx = downstream_nodes[0]
             graph[node_idx]["dnhydroseq"] = graph[downstream_idx]["hydroseq"]
+            graph[node_idx]["flowpath_toid"] = graph[downstream_idx]["flowpath_id"]
         else:
             graph[node_idx]["dnhydroseq"] = 0
+            graph[node_idx]["flowpath_toid"] = "0"
 
     # PASS 2: Calculate totdasqkm and stream_order (forward topo order - downstream from headwaters)
     for node_idx in topo_order:
@@ -180,8 +182,10 @@ def _trace_attributes(
 
     # Extract results
     flowpath_ids = []
+    flowpath_toids = []
     vpu_ids = []
     das = []
+    lengthkms = []
     total_das = []
     mainstems = []
     pathlengths = []
@@ -194,8 +198,10 @@ def _trace_attributes(
     for node_idx in graph.node_indices():
         node_data = graph[node_idx]
         flowpath_ids.append(node_data["flowpath_id"])
+        flowpath_toids.append(node_data["flowpath_toid"])
         vpu_ids.append(vpu_id)
         das.append(node_data["areasqkm"])
+        lengthkms.append(node_data["lengthkm"])
         total_das.append(node_data["totdasqkm"])
         mainstems.append(node_data["mainstemlp"])
         pathlengths.append(node_data["pathlength"])
@@ -208,7 +214,9 @@ def _trace_attributes(
     return gpd.GeoDataFrame(
         {
             "flowpath_id": flowpath_ids,
+            "flowpath_toid": flowpath_toids,
             "VPUID": vpu_ids,
+            "lengthkm": lengthkms,
             "areasqkm": das,
             "totdasqkm": total_das,
             "mainstemlp": mainstems,
