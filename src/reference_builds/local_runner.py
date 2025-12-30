@@ -4,7 +4,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any, Self
 
-from reference_builds.configs import PRVI
+from reference_builds.configs import ReferenceConfig
 from reference_builds.logs import setup_logging
 from reference_builds.task_instance import TaskInstance
 
@@ -34,7 +34,7 @@ class LocalRunner:
 
     def __init__(
         self,
-        config: PRVI,
+        config: ReferenceConfig,
         run_id: str | None = None,
     ) -> None:
         """Initialize the LocalRunner.
@@ -46,7 +46,7 @@ class LocalRunner:
         run_id : str or None, default=None
             Optional run identifier. Auto-generated if not provided.
         """
-        self.config: PRVI = config
+        self.config: ReferenceConfig = config
         self.run_id: str = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.ti: TaskInstance = TaskInstance()
         self.results: dict[str, dict[str, Any]] = {}

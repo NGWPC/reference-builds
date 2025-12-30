@@ -8,7 +8,7 @@ import pandas as pd
 import polars as pl
 import rustworkx as rx
 
-from reference_builds.configs import PRVI
+from reference_builds.configs import ReferenceConfig
 from reference_builds.task_instance import TaskInstance
 
 logger = logging.getLogger(__name__)
@@ -282,7 +282,7 @@ def build_reference(**context: dict[str, Any]) -> dict[str, Any]:
         The reference flowpath and divides references in memory
     """
     ti = cast(TaskInstance, context["ti"])
-    cfg = cast(PRVI, context["config"])
+    cfg = cast(ReferenceConfig, context["config"])
     graph: rx.PyDiGraph = ti.xcom_pull(task_id="build_graphs", key="graph")
     node_indices: dict[str, int] = ti.xcom_pull(task_id="build_graphs", key="node_indices")
     _flowpaths: pl.DataFrame = ti.xcom_pull(task_id="download", key="nhd_flowpaths")

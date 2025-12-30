@@ -1,2 +1,4 @@
-output_dir: data/
+domain: prvi
+input_file_regex: PRVI/NHDPLUS_H_21*_HU4_GPKG
+vpu_id: "21"
 crs: EPSG:6566
