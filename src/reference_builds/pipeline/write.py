@@ -46,5 +46,5 @@ def write_reference(**context: dict[str, Any]) -> dict[str, Any]:
         logger.info(f"write_nhd_data task: wrote geopackage layers to {cfg.output_reference_gpkg_path}")
 
     final_flowpaths.to_parquet(cfg.output_reference_flowpaths_path)
-    final_flowpaths.to_parquet(cfg.output_reference_divides_path)
+    final_divides.to_parquet(cfg.output_reference_divides_path)
     return {}
