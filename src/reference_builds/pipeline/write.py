@@ -9,7 +9,7 @@ from reference_builds.task_instance import TaskInstance
 logger = logging.getLogger(__name__)
 
 
-def write_nhd_data(**context: dict[str, Any]) -> dict[str, Any]:
+def write_reference(**context: dict[str, Any]) -> dict[str, Any]:
     """Opens local / downloads for the reference-build process
 
     Parameters
@@ -35,6 +35,9 @@ def write_nhd_data(**context: dict[str, Any]) -> dict[str, Any]:
 
     final_flowpaths = ti.xcom_pull(task_id="build_reference", key="reference_flowpaths")
     final_divides = ti.xcom_pull(task_id="build_reference", key="reference_divides")
+
+    final_flowpaths = final_flowpaths.to_crs(cfg.crs)
+    final_divides = final_divides.to_crs(cfg.crs)
 
     if cfg.write_gpkg:
         cfg.output_reference_gpkg_path.unlink(missing_ok=True)

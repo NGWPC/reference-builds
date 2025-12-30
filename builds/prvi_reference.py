@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from reference_builds.configs import PRVI
 from reference_builds.local_runner import LocalRunner
-from reference_builds.pipeline import build_graphs, build_reference, download_nhd_data, write_nhd_data
+from reference_builds.pipeline import build_graphs, build_reference, download_nhd_data, write_reference
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def main() -> int:
         runner.run_task(task_id="download", python_callable=download_nhd_data, op_kwargs={})
         runner.run_task(task_id="build_graphs", python_callable=build_graphs, op_kwargs={})
         runner.run_task(task_id="build_reference", python_callable=build_reference, op_kwargs={})
-        runner.run_task(task_id="write_nhd_data", python_callable=write_nhd_data, op_kwargs={})
+        runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
 
         print("Pipeline completed")
         print("=" * 60)
