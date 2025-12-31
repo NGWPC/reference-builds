@@ -1,11 +1,11 @@
-"""An end-to-end build file that will take the NHD PRVI and turn it into a reference fabric"""
+"""An end-to-end build file that will take the NHD ReferenceConfig and turn it into a reference fabric"""
 
 import argparse
 import logging
 
 from pydantic import ValidationError
 
-from reference_builds.configs import PRVI
+from reference_builds.configs import ReferenceConfig
 from reference_builds.local_runner import LocalRunner
 from reference_builds.pipeline import build_graphs, build_reference, download_nhd_data, write_reference
 
@@ -25,7 +25,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        config = PRVI.from_yaml(args.config)
+        config = ReferenceConfig.from_yaml(args.config)
     except ValidationError as e:
         print("Configuration validation failed:")
         for error in e.errors():

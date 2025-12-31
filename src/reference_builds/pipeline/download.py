@@ -8,7 +8,7 @@ import geopandas as gpd
 import pandas as pd
 import polars as pl
 
-from reference_builds.configs import PRVI
+from reference_builds.configs import ReferenceConfig
 from reference_builds.utils import _validate_and_fix_geometries
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def download_nhd_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
     dict[str, pl.DataFrame]
         The reference flowpath and divides references in memory
     """
-    cfg = cast(PRVI, context["config"])
+    cfg = cast(ReferenceConfig, context["config"])
 
     # find the gpkg files from the ScienceBase NHD folders
     matching_folders = list(cfg.output_dir.glob(cfg.input_file_regex))

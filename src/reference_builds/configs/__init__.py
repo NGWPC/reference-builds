@@ -1,3 +1,3 @@
-from .prvi import PRVI
+from .reference_config import ReferenceConfig
 
-__all__ = ["PRVI"]
+__all__ = ["ReferenceConfig"]

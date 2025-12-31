@@ -27,7 +27,9 @@ class TestTraceAttributes:
 
         expected_columns = {
             "flowpath_id",
+            "flowpath_toid",
             "VPUID",
+            "lengthkm",
             "areasqkm",
             "totdasqkm",
             "mainstemlp",

@@ -1,0 +1,4 @@
+domain: hi
+input_file_regex: HI/NHDPLUS_H_20*_HU4_GPKG
+vpu_id: "20"
+crs: EPSG:32604

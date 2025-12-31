@@ -3,7 +3,7 @@
 import logging
 from typing import Any, cast
 
-from reference_builds.configs import PRVI
+from reference_builds.configs import ReferenceConfig
 from reference_builds.task_instance import TaskInstance
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def write_reference(**context: dict[str, Any]) -> dict[str, Any]:
     dict[str, Any]
         The reference flowpath and divides references in memory
     """
-    cfg = cast(PRVI, context["config"])
+    cfg = cast(ReferenceConfig, context["config"])
     ti = cast(TaskInstance, context["ti"])
     cfg.output_reference_flowpaths_path.unlink(missing_ok=True)  # deletes files that exist with the same name
     cfg.output_reference_divides_path.unlink(missing_ok=True)  # deletes files that exist with the same name

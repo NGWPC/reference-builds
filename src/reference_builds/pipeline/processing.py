@@ -65,6 +65,14 @@ def _build_graph(connectivity: pl.DataFrame, flowpaths: pl.DataFrame) -> dict[st
         )
     )
 
+    all_flowpath_ids = flowpaths.select(pl.col("NHDPlusID").cast(pl.Int64).cast(pl.Utf8))[
+        "NHDPlusID"
+    ].to_list()
+
+    for fp_id in all_flowpath_ids:
+        if fp_id not in upstream_dict:
+            upstream_dict[fp_id] = []
+
     return upstream_dict
 
 
