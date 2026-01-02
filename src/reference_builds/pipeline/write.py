@@ -33,8 +33,8 @@ def write_reference(**context: dict[str, Any]) -> dict[str, Any]:
     cfg.output_reference_flowpaths_path.unlink(missing_ok=True)  # deletes files that exist with the same name
     cfg.output_reference_divides_path.unlink(missing_ok=True)  # deletes files that exist with the same name
 
-    final_flowpaths = ti.xcom_pull(task_id="build_reference", key="reference_flowpaths")
-    final_divides = ti.xcom_pull(task_id="build_reference", key="reference_divides")
+    final_flowpaths = ti.xcom_pull(task_id="build_nhd_reference", key="reference_flowpaths")
+    final_divides = ti.xcom_pull(task_id="build_nhd_reference", key="reference_divides")
 
     final_flowpaths = final_flowpaths.to_crs(cfg.crs)
     final_divides = final_divides.to_crs(cfg.crs)

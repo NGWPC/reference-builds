@@ -1,5 +1,6 @@
 """A file to host all Hydrofabric Schemas"""
 
+from enum import Enum
 from pathlib import Path
 from typing import Self
 
@@ -10,12 +11,24 @@ from pyprojroot import here
 from reference_builds import __version__
 
 
+class BaseDataset(str, Enum):
+    """Enum for the base dataset used in reference builds"""
+
+    NHD = "nhd"
+    GEOGLOWS = "geoglows"
+
+
 class ReferenceConfig(BaseModel):
     """Configs for building the ReferenceConfig reference"""
 
     output_dir: Path = Field(
         default=here() / "data/",
         description="The directory for output files to be saved from Hydrofabric builds",
+    )
+
+    base_dataset: BaseDataset = Field(
+        default=BaseDataset.NHD,
+        description="The base dataset to use for the reference build",
     )
 
     domain: str = Field(description="The domain used for the building your reference")

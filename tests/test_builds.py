@@ -1,15 +1,14 @@
-"""Tests for build_reference module"""
+"""Tests for build_nhd_reference module"""
 
 import geopandas as gpd
 import numpy as np
 import pytest
 import rustworkx as rx
-from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
-
-from reference_builds.pipeline.build_reference import (
+from reference_builds.pipeline.build_nhd_reference import (
     _create_reference_divides,
     _trace_attributes,
 )
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
 
 
 class TestTraceAttributes:

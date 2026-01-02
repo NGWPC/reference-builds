@@ -93,6 +93,8 @@ def _build_rustworkx_object(
     """
     graph = rx.PyDiGraph(check_cycle=True)
     node_indices: dict[Any, int] = {}
+    if None in upstream_network:
+        upstream_network.pop(None)
     for to_edge in sorted(upstream_network.keys()):
         from_edges = upstream_network[to_edge]  # type: ignore
         if to_edge not in node_indices:

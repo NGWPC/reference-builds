@@ -1,0 +1,5 @@
+domain: ak
+base_dataset: geoglows
+input_file_regex: AK/streams_mapping_8*.gpkg
+vpu_id: "19"
+crs: EPSG:3338

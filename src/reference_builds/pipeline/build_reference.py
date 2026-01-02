@@ -63,7 +63,7 @@ def _trace_attributes(
 
     # Find all outlets (nodes with no downstream connections)
     outlets = [idx for idx in graph.node_indices() if graph.out_degree(idx) == 0]
-    logger.info(f"build_reference task: Found {len(outlets)} outlets (disconnected subgraphs)")
+    logger.info(f"build_nhd_reference task: Found {len(outlets)} outlets (disconnected subgraphs)")
 
     # Get topological order for entire graph
     try:
@@ -262,7 +262,7 @@ def _create_reference_divides(
     return reference_divides
 
 
-def build_reference(**context: dict[str, Any]) -> dict[str, Any]:
+def build_nhd_reference(**context: dict[str, Any]) -> dict[str, Any]:
     """Opens local / downloads for the reference-build process
 
     Parameters
