@@ -34,7 +34,11 @@ class ReferenceConfig(BaseModel):
     domain: str = Field(description="The domain used for the building your reference")
 
     input_file_regex: str = Field(
-        description="input file to be converted into a reference product",
+        description="regex to find input files to be converted into a reference product",
+    )
+    geoglows_catchment_regex: str | None = Field(
+        default=None,
+        description="regex to file catchment files from geoglows",
     )
 
     crs: str = Field(

@@ -19,9 +19,18 @@ def _load_and_concat_layers(gpkg_files: list[Path], layer_name: str | None) -> g
     gdfs = []
     for gpkg_path in gpkg_files:
         if layer_name is None:
-            gdf = gpd.read_file(gpkg_path)
+            gdf = gpd.read_file(gpkg_path, driver="GPKG")
         else:
             gdf = gpd.read_file(gpkg_path, layer=layer_name)
+        gdfs.append(gdf)
+    return pd.concat(gdfs, ignore_index=True)
+
+
+def _load_and_concat_parquet(parquet_files: list[Path]) -> gpd.GeoDataFrame:
+    """Load a specific layer from all parquet files and concatenate."""
+    gdfs = []
+    for parquet_path in parquet_files:
+        gdf = gpd.read_parquet(parquet_path)
         gdfs.append(gdf)
     return pd.concat(gdfs, ignore_index=True)
 
@@ -48,32 +57,20 @@ def download_geoglows_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]
     cfg = cast(ReferenceConfig, context["config"])
 
     # find the gpkg files from the ScienceBase NHD folders
-    matching_folders = list(cfg.output_dir.glob(cfg.input_file_regex))
-    gpkg_files: list[Path] = []
-    for folder in matching_folders:
-        if folder.is_dir():
-            gpkg_files.extend(folder.glob("*.gpkg"))
+    gpkg_files = list(cfg.output_dir.glob(cfg.input_file_regex))
 
+    assert cfg.geoglows_catchment_regex is not None, "Need to specify where the catchment parquet files are"
+    parquet_files = list(cfg.output_dir.glob(cfg.geoglows_catchment_regex))
     # load layers
-    layers = [
-        "NHDFlowline",
-        "NHDPlusCatchment",
-        "NHDPlusFlowlineVAA",
-    ]
-    data = {layer: _load_and_concat_layers(gpkg_files, layer) for layer in layers}
-
+    __flowpaths = _load_and_concat_layers(gpkg_files, layer_name=None)
+    __catchments = _load_and_concat_parquet(parquet_files)
     # filter/validate layers
-    _flowpaths = _validate_and_fix_geometries(data["NHDFlowline"], geom_type="flowpaths")
-    catchments = _validate_and_fix_geometries(data["NHDPlusCatchment"], geom_type="divides")
-    _flowpaths_with_catchments = _flowpaths[_flowpaths["NHDPlusID"].isin(catchments["NHDPlusID"])]
-    flowpaths = _flowpaths_with_catchments[
-        _flowpaths_with_catchments["fcode_description"].isin(cfg.permitted_fcodes)
-    ]
+    flowpaths = _validate_and_fix_geometries(__flowpaths, geom_type="flowpaths")
+    catchments = _validate_and_fix_geometries(__catchments, geom_type="divides")
 
     return {
-        "nhd_flowpaths": pl.from_pandas(flowpaths.to_wkb()),
-        "nhd_divides": pl.from_pandas(catchments.to_wkb()),
-        "nhd_connectivity": pl.from_pandas(data["NHDPlusFlowlineVAA"]),
+        "geoglows_flowpaths": pl.from_pandas(flowpaths.to_wkb()),
+        "geoglows_divides": pl.from_pandas(catchments.to_wkb()),
     }
 
 
