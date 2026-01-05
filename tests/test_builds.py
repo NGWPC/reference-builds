@@ -4,11 +4,12 @@ import geopandas as gpd
 import numpy as np
 import pytest
 import rustworkx as rx
-from reference_builds.pipeline.build_nhd_reference import (
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
+
+from reference_builds.pipeline.build_reference import (
     _create_reference_divides,
     _trace_attributes,
 )
-from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
 
 
 class TestTraceAttributes:
