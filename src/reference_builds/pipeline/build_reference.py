@@ -1,4 +1,4 @@
-"""Contains all code for building a reference fabric from the NHD graph object"""
+"""Contains all code for building a reference fabric from the reference graph object"""
 
 import logging
 from typing import Any, cast
@@ -10,6 +10,7 @@ import rustworkx as rx
 
 from reference_builds.configs import ReferenceConfig
 from reference_builds.task_instance import TaskInstance
+from reference_builds.utils.geometries import _orient_flowpath_downstream
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +180,35 @@ def _trace_attributes(
                 graph[node_idx]["streamorder"] = max_order + 1
             else:
                 graph[node_idx]["streamorder"] = max_order
+
+    # PASS 3: Orient all flowpath geometries so they flow upstream -> downstream
+    for node_idx in graph.node_indices():
+        in_edges = graph.in_edges(node_idx)
+        upstream_nodes = [src_idx for src_idx, _, _ in in_edges]
+
+        # Check if this is an outlet (flowpath_toid == "0" means no downstream)
+        is_outlet = graph[node_idx]["flowpath_toid"] == "0"
+
+        if is_outlet and upstream_nodes:
+            # Outlet: use upstream geometry
+            upstream_idx = upstream_nodes[0]
+            us_geom = graph[upstream_idx]["geometry"]
+            graph[node_idx]["geometry"] = _orient_flowpath_downstream(
+                graph[node_idx]["geometry"], ds_geom=None, us_geom=us_geom
+            )
+        else:
+            # Normal case: use downstream geometry
+            out_edges = graph.out_edges(node_idx)
+            downstream_nodes = [tgt_idx for _, tgt_idx, _ in out_edges]
+
+            ds_geom = None
+            if downstream_nodes:
+                downstream_idx = downstream_nodes[0]
+                ds_geom = graph[downstream_idx]["geometry"]
+
+            graph[node_idx]["geometry"] = _orient_flowpath_downstream(
+                graph[node_idx]["geometry"], ds_geom=ds_geom, us_geom=None
+            )
 
     # Extract results
     flowpath_ids = []
@@ -397,6 +427,35 @@ def _trace_geoglows_attributes(
         else:
             graph[node_idx]["dnhydroseq"] = 0
             graph[node_idx]["flowpath_toid"] = "0"
+
+    # PASS 3: Orient all flowpath geometries so they flow upstream -> downstream
+    for node_idx in graph.node_indices():
+        in_edges = graph.in_edges(node_idx)
+        upstream_nodes = [src_idx for src_idx, _, _ in in_edges]
+
+        # Check if this is an outlet (flowpath_toid == "0" means no downstream)
+        is_outlet = graph[node_idx]["flowpath_toid"] == "0"
+
+        if is_outlet and upstream_nodes:
+            # Outlet: use upstream geometry
+            upstream_idx = upstream_nodes[0]
+            us_geom = graph[upstream_idx]["flowpath_geometry"]
+            graph[node_idx]["flowpath_geometry"] = _orient_flowpath_downstream(
+                graph[node_idx]["flowpath_geometry"], ds_geom=None, us_geom=us_geom
+            )
+        else:
+            # Normal case: use downstream geometry
+            out_edges = graph.out_edges(node_idx)
+            downstream_nodes = [tgt_idx for _, tgt_idx, _ in out_edges]
+
+            ds_geom = None
+            if downstream_nodes:
+                downstream_idx = downstream_nodes[0]
+                ds_geom = graph[downstream_idx]["flowpath_geometry"]
+
+            graph[node_idx]["flowpath_geometry"] = _orient_flowpath_downstream(
+                graph[node_idx]["flowpath_geometry"], ds_geom=ds_geom, us_geom=None
+            )
 
     # Extract results for flowpaths
     flowpath_ids = []
