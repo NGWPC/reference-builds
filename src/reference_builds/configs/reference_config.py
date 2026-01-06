@@ -1,5 +1,6 @@
 """A file to host all Hydrofabric Schemas"""
 
+from enum import Enum
 from pathlib import Path
 from typing import Self
 
@@ -10,6 +11,13 @@ from pyprojroot import here
 from reference_builds import __version__
 
 
+class BaseDataset(str, Enum):
+    """Enum for the base dataset used in reference builds"""
+
+    NHD = "nhd"
+    GEOGLOWS = "geoglows"
+
+
 class ReferenceConfig(BaseModel):
     """Configs for building the ReferenceConfig reference"""
 
@@ -18,10 +26,19 @@ class ReferenceConfig(BaseModel):
         description="The directory for output files to be saved from Hydrofabric builds",
     )
 
+    base_dataset: BaseDataset = Field(
+        default=BaseDataset.NHD,
+        description="The base dataset to use for the reference build",
+    )
+
     domain: str = Field(description="The domain used for the building your reference")
 
     input_file_regex: str = Field(
-        description="input file to be converted into a reference product",
+        description="regex to find input files to be converted into a reference product",
+    )
+    geoglows_catchment_regex: str | None = Field(
+        default=None,
+        description="regex to file catchment files from geoglows",
     )
 
     crs: str = Field(

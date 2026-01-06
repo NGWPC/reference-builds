@@ -5,9 +5,17 @@ import logging
 
 from pydantic import ValidationError
 
-from reference_builds.configs import ReferenceConfig
+from reference_builds.configs import BaseDataset, ReferenceConfig
 from reference_builds.local_runner import LocalRunner
-from reference_builds.pipeline import build_graphs, build_reference, download_nhd_data, write_reference
+from reference_builds.pipeline import (
+    build_geoglows_graphs,
+    build_geoglows_reference,
+    build_nhd_graphs,
+    build_nhd_reference,
+    download_geoglows_data,
+    download_nhd_data,
+    write_reference,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +47,20 @@ def main() -> int:
         raise TypeError("Config file not specified.") from e
 
     with LocalRunner(config) as runner:
-        runner.run_task(task_id="download", python_callable=download_nhd_data, op_kwargs={})
-        runner.run_task(task_id="build_graphs", python_callable=build_graphs, op_kwargs={})
-        runner.run_task(task_id="build_reference", python_callable=build_reference, op_kwargs={})
-        runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        if config.base_dataset == BaseDataset.NHD:
+            runner.run_task(task_id="download", python_callable=download_nhd_data, op_kwargs={})
+            runner.run_task(task_id="build_nhd_graphs", python_callable=build_nhd_graphs, op_kwargs={})
+            runner.run_task(task_id="build_reference", python_callable=build_nhd_reference, op_kwargs={})
+            runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        elif config.base_dataset == BaseDataset.GEOGLOWS:
+            runner.run_task(task_id="download", python_callable=download_geoglows_data, op_kwargs={})
+            runner.run_task(
+                task_id="build_geoglows_graphs", python_callable=build_geoglows_graphs, op_kwargs={}
+            )
+            runner.run_task(task_id="build_reference", python_callable=build_geoglows_reference, op_kwargs={})
+            runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        else:
+            raise NotImplementedError("Base Dataset not implemented")
 
         print("Pipeline completed")
         print("=" * 60)

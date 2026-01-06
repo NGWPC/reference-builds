@@ -1,4 +1,4 @@
-"""Contains all code for processing nhd data"""
+"""Contains all pipeline code for processing reference data"""
 
 import logging
 from typing import Any, cast
@@ -7,73 +7,10 @@ import polars as pl
 import rustworkx as rx
 
 from reference_builds.task_instance import TaskInstance
+from reference_builds.utils.geoglows_graph import _build_geoglows_graph
+from reference_builds.utils.nhd_graph import _build_graph
 
 logger = logging.getLogger(__name__)
-
-
-def _build_graph(connectivity: pl.DataFrame, flowpaths: pl.DataFrame) -> dict[str, list[str]]:
-    """Build a graph of upstream flowpath connections.
-
-    Parameters
-    ----------
-    connectivity : pl.DataFrame
-        The connectivity/flow table with FromNode and ToNode columns
-    flowpaths : pl.DataFrame
-        The reference flowpaths to filter to
-
-    Returns
-    -------
-    dict[str, list[str]]
-        The upstream dictionary containing upstream and downstream connections
-        Key is the downstream flowpath ID, values are the upstream flowpath IDs
-    """
-    valid_ids = flowpaths.select(pl.col("NHDPlusID").cast(pl.Int64))["NHDPlusID"]
-
-    filtered_connectivity = connectivity.select(
-        [
-            pl.col("NHDPlusID").cast(pl.Int64),
-            pl.col("FromNode").cast(pl.Int64),
-            pl.col("ToNode").cast(pl.Int64),
-        ]
-    ).filter(pl.col("NHDPlusID").is_in(valid_ids))
-
-    tonode_lookup = filtered_connectivity.select(
-        [
-            pl.col("ToNode"),
-            pl.col("NHDPlusID").cast(pl.Utf8).alias("upstream_id"),
-        ]
-    )
-
-    fromnode_lookup = filtered_connectivity.select(
-        [
-            pl.col("FromNode"),
-            pl.col("NHDPlusID").cast(pl.Utf8).alias("downstream_id"),
-        ]
-    )
-
-    merged = tonode_lookup.join(fromnode_lookup, left_on="ToNode", right_on="FromNode", how="inner").select(
-        ["upstream_id", "downstream_id"]
-    )
-
-    upstream_network_df = merged.group_by("downstream_id").agg(pl.col("upstream_id").alias("upstream_list"))
-
-    upstream_dict: dict[str, list[str]] = dict(
-        zip(
-            upstream_network_df["downstream_id"].to_list(),
-            upstream_network_df["upstream_list"].to_list(),
-            strict=False,
-        )
-    )
-
-    all_flowpath_ids = flowpaths.select(pl.col("NHDPlusID").cast(pl.Int64).cast(pl.Utf8))[
-        "NHDPlusID"
-    ].to_list()
-
-    for fp_id in all_flowpath_ids:
-        if fp_id not in upstream_dict:
-            upstream_dict[fp_id] = []
-
-    return upstream_dict
 
 
 def _build_rustworkx_object(
@@ -93,6 +30,8 @@ def _build_rustworkx_object(
     """
     graph = rx.PyDiGraph(check_cycle=True)
     node_indices: dict[Any, int] = {}
+    if None in upstream_network:
+        upstream_network.pop(None)  # type: ignore
     for to_edge in sorted(upstream_network.keys()):
         from_edges = upstream_network[to_edge]  # type: ignore
         if to_edge not in node_indices:
@@ -106,7 +45,7 @@ def _build_rustworkx_object(
     return graph, node_indices
 
 
-def build_graphs(**context: dict[str, Any]) -> dict[str, Any]:
+def build_nhd_graphs(**context: dict[str, Any]) -> dict[str, Any]:
     """Builds and processes graphs from NHD data
 
     Parameters
@@ -129,5 +68,31 @@ def build_graphs(**context: dict[str, Any]) -> dict[str, Any]:
     flowpaths: pl.DataFrame = ti.xcom_pull(task_id="download", key="nhd_flowpaths")
     connectivity: pl.DataFrame = ti.xcom_pull(task_id="download", key="nhd_connectivity")
     upstream_network = _build_graph(connectivity, flowpaths)
+    graph, node_indices = _build_rustworkx_object(upstream_network)
+    return {"graph": graph, "node_indices": node_indices}
+
+
+def build_geoglows_graphs(**context: dict[str, Any]) -> dict[str, Any]:
+    """Builds and processes graphs from NHD data
+
+    Parameters
+    ----------
+    **context : dict
+        Airflow-compatible context containing:
+        - ti : TaskInstance for XCom operations
+        - config : HFConfig with pipeline configuration
+        - task_id : str identifier for this task
+        - run_id : str identifier for this pipeline run
+        - ds : str execution date
+        - execution_date : datetime object
+
+    Returns
+    -------
+    dict[str, Any]
+        The rustworkx graph object and node_indices for the NHD
+    """
+    ti = cast(TaskInstance, context["ti"])
+    flowpaths: pl.DataFrame = ti.xcom_pull(task_id="download", key="geoglows_flowpaths")
+    upstream_network = _build_geoglows_graph(flowpaths)
     graph, node_indices = _build_rustworkx_object(upstream_network)
     return {"graph": graph, "node_indices": node_indices}

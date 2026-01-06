@@ -1,3 +1,3 @@
-from .reference_config import ReferenceConfig
+from .reference_config import BaseDataset, ReferenceConfig
 
-__all__ = ["ReferenceConfig"]
+__all__ = ["BaseDataset", "ReferenceConfig"]

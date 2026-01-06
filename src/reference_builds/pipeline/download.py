@@ -14,13 +14,64 @@ from reference_builds.utils import _validate_and_fix_geometries
 logger = logging.getLogger(__name__)
 
 
-def _load_and_concat_layers(gpkg_files: list[Path], layer_name: str) -> gpd.GeoDataFrame:
+def _load_and_concat_layers(gpkg_files: list[Path], layer_name: str | None) -> gpd.GeoDataFrame:
     """Load a specific layer from all gpkg files and concatenate."""
     gdfs = []
     for gpkg_path in gpkg_files:
-        gdf = gpd.read_file(gpkg_path, layer=layer_name)
+        if layer_name is None:
+            gdf = gpd.read_file(gpkg_path, driver="GPKG")
+        else:
+            gdf = gpd.read_file(gpkg_path, layer=layer_name)
         gdfs.append(gdf)
     return pd.concat(gdfs, ignore_index=True)
+
+
+def _load_and_concat_parquet(parquet_files: list[Path]) -> gpd.GeoDataFrame:
+    """Load a specific layer from all parquet files and concatenate."""
+    gdfs = []
+    for parquet_path in parquet_files:
+        gdf = gpd.read_parquet(parquet_path)
+        gdfs.append(gdf)
+    return pd.concat(gdfs, ignore_index=True)
+
+
+def download_geoglows_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
+    """Opens local / downloads for the reference-build process
+
+    Parameters
+    ----------
+    **context : dict
+        Airflow-compatible context containing:
+        - ti : TaskInstance for XCom operations
+        - config : HFConfig with pipeline configuration
+        - task_id : str identifier for this task
+        - run_id : str identifier for this pipeline run
+        - ds : str execution date
+        - execution_date : datetime object
+
+    Returns
+    -------
+    dict[str, pl.DataFrame]
+        The reference flowpath and divides references in memory
+    """
+    cfg = cast(ReferenceConfig, context["config"])
+
+    # find the gpkg files from the ScienceBase NHD folders
+    gpkg_files = list(cfg.output_dir.glob(cfg.input_file_regex))
+
+    assert cfg.geoglows_catchment_regex is not None, "Need to specify where the catchment parquet files are"
+    parquet_files = list(cfg.output_dir.glob(cfg.geoglows_catchment_regex))
+    # load layers
+    __flowpaths = _load_and_concat_layers(gpkg_files, layer_name=None)
+    __catchments = _load_and_concat_parquet(parquet_files)
+    # filter/validate layers
+    flowpaths = _validate_and_fix_geometries(__flowpaths, geom_type="flowpaths")
+    catchments = _validate_and_fix_geometries(__catchments, geom_type="divides")
+
+    return {
+        "geoglows_flowpaths": pl.from_pandas(flowpaths.to_wkb()),
+        "geoglows_divides": pl.from_pandas(catchments.to_wkb()),
+    }
 
 
 def download_nhd_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
