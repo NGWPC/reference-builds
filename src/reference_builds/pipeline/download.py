@@ -194,13 +194,8 @@ def download_nhd_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
 
     catchments = _validate_and_fix_geometries(data["NHDPlusCatchment"], geom_type="divides")
 
-    # merge flowpaths with connectivity info from VAA table
-    flowpaths, connectivity = _merge_flowpaths_without_catchments(
-        _flowpaths, catchments, data["NHDPlusFlowlineVAA"]
-    )
-
     return {
-        "nhd_flowpaths": pl.from_pandas(flowpaths.to_wkb()),
+        "nhd_flowpaths": pl.from_pandas(_flowpaths.to_wkb()),
         "nhd_divides": pl.from_pandas(catchments.to_wkb()),
-        "nhd_connectivity": pl.from_pandas(connectivity),
+        "nhd_connectivity": pl.from_pandas(data["NHDPlusFlowlineVAA"]),
     }
