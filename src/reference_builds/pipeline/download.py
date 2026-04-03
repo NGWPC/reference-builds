@@ -40,7 +40,9 @@ def _merge_flowpaths_without_catchments(
     catchments: gpd.GeoDataFrame,
     connectivity: pd.DataFrame,
 ) -> tuple[gpd.GeoDataFrame, pd.DataFrame]:
-    """Merge flowpaths without catchments to its downstream neighbor
+    """Merge flowpaths without catchments to its downstream neighbor.
+
+    FIXME: This currently breaks connectivity info as well as path length calculations among other things. Needs significant rework.
 
     Parameters
     ----------
