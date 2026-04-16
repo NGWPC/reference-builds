@@ -192,12 +192,15 @@ def download_nhd_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
 
     # filter/validate layers
     _flowpaths = _validate_and_fix_geometries(data["NHDFlowline"], geom_type="flowpaths")
-    _flowpaths = _flowpaths[_flowpaths["fcode_description"].isin(cfg.permitted_fcodes)]
-
     catchments = _validate_and_fix_geometries(data["NHDPlusCatchment"], geom_type="divides")
 
+    _flowpaths_with_catchments = _flowpaths[_flowpaths["NHDPlusID"].isin(catchments["NHDPlusID"])]
+    flowpaths = _flowpaths_with_catchments[
+        _flowpaths_with_catchments["fcode_description"].isin(cfg.permitted_fcodes)
+    ]
+
     return {
-        "nhd_flowpaths": pl.from_pandas(_flowpaths.to_wkb()),
+        "nhd_flowpaths": pl.from_pandas(flowpaths.to_wkb()),
         "nhd_divides": pl.from_pandas(catchments.to_wkb()),
         "nhd_connectivity": pl.from_pandas(data["NHDPlusFlowlineVAA"]),
     }
