@@ -1,8 +1,13 @@
 """A file for all geometry related internal functions"""
 
+import logging
+
 import geopandas as gpd
-from shapely import wkb
-from shapely.geometry import LineString, MultiLineString, Point
+import pandas as pd
+from shapely import Geometry, wkb
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_geometry(geom):  # type: ignore[no-untyped-def]
@@ -85,6 +90,62 @@ def _orient_flowpath_downstream(geom, ds_geom=None, us_geom=None):  # type: igno
     return geom
 
 
+def _drop_exclaves(geom: Geometry) -> Geometry:
+    """Find and destroy non-contiguous parts of MultiPolygons"""
+    if geom.geom_type != "MultiPolygon":
+        return geom
+    main_part = geom.geoms[0]
+    for part in geom.geoms:
+        if part.area > main_part.area:
+            main_part = part
+    main_part_buffered = main_part.buffer(1.0)
+    for part in geom.geoms:
+        if part.intersects(main_part_buffered):
+            main_part = main_part.union(part)
+    return main_part
+
+
+def _find_exclaves(geom: Geometry) -> pd.Series:
+    """Find and exclude non-contiguous parts of MultiPolygons, appending them to a list to be resolved later"""
+    exclaves = []
+    if geom.geom_type != "MultiPolygon":
+        return pd.Series(data={"geometry": geom, "exclaves": exclaves}, index=["geometry", "exclaves"])
+
+    main_part = geom.geoms[0]
+    for part in geom.geoms:
+        if part.area > main_part.area:
+            main_part = part
+    included_parts = [main_part]
+    main_part_buffered = main_part.buffer(1.0)
+    for part in geom.geoms:
+        if part.intersects(main_part_buffered):
+            included_parts.append(part)
+            main_part = MultiPolygon(included_parts)
+        else:
+            exclaves.append(part)
+    return pd.Series(data={"geometry": main_part, "exclaves": exclaves}, index=["geometry", "exclaves"])
+
+
+def _fix_divide_exclaves(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Remove exclaves from catchment geometries, merging them in with the neighbor it intersects the most with"""
+    exclaves = gdf["geometry"].apply(_find_exclaves)
+
+    fixed_count = 0
+
+    gdf["geometry"] = exclaves["geometry"]
+    for idx, e in exclaves["exclaves"].items():
+        for exclave in e:
+            buffer = exclave.buffer(1.0)
+            intersection_areas = gdf.intersection(buffer).area
+            intersection_areas[idx] = 0.0
+            best_idx = intersection_areas.argmax()
+            gdf.loc[best_idx, "geometry"] = gdf["geometry"][best_idx].union(exclave)
+            fixed_count += 1
+
+    logger.info(f"fix_divide_exclaves: fixed/merged {fixed_count} polygons")
+    return gdf
+
+
 def _validate_and_fix_geometries(gdf: gpd.GeoDataFrame, geom_type: str) -> gpd.GeoDataFrame:
     """Validate and fix invalid geometries in a GeoDataFrame.
 
@@ -112,7 +173,7 @@ def _validate_and_fix_geometries(gdf: gpd.GeoDataFrame, geom_type: str) -> gpd.G
         return gdf  # No invalid geometries
 
     geometries = gdf[invalid_mask].geometry
-    gdf.loc[invalid_mask, "geometry"] = geometries.make_valid()
+    gdf.loc[invalid_mask, "geometry"] = geometries.make_valid(method="structure")
 
     if len(gdf[~gdf.geometry.is_valid]) > 0:
         raise ValueError(f"Could not fix invalid geometries in {geom_type}")

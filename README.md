@@ -9,8 +9,13 @@ https://www.sciencebase.gov/catalog/item/57645ff2e4b07657d19ba8e8
 
 the zipped geopackage is required
 
+Since reference 0.1.6, The USGS Reference Hydrofabric is used for *AK* and can be downloaded for the entire state here (as VPU 19). This change was made to include more coastal areas for better NWM support:
+https://www.sciencebase.gov/catalog/item/6644f800d34e1955f5a42da9
+
+the reference_19 geopackage is required
+
 ### GeoGlows
-GeoGlows v2 is used for the *AK* reference and can be downloaded from the following location:
+Prior to reference 0.1.6, GeoGlows v2 was used for the *AK* reference and the code to use it is still present. The source files can be downloaded from the following location:
 - http://geoglows-v2.s3-website-us-west-2.amazonaws.com/#hydrography/vpu=801/
 - http://geoglows-v2.s3-website-us-west-2.amazonaws.com/#hydrography/vpu=802/
 - http://geoglows-v2.s3-website-us-west-2.amazonaws.com/#hydrography/vpu=803/

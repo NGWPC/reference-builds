@@ -9,6 +9,7 @@ import rustworkx as rx
 from reference_builds.task_instance import TaskInstance
 from reference_builds.utils.geoglows_graph import _build_geoglows_graph
 from reference_builds.utils.nhd_graph import _build_graph
+from reference_builds.utils.usgs_graph import _build_usgs_hf_graph
 
 logger = logging.getLogger(__name__)
 
@@ -94,5 +95,31 @@ def build_geoglows_graphs(**context: dict[str, Any]) -> dict[str, Any]:
     ti = cast(TaskInstance, context["ti"])
     flowpaths: pl.DataFrame = ti.xcom_pull(task_id="download", key="geoglows_flowpaths")
     upstream_network = _build_geoglows_graph(flowpaths)
+    graph, node_indices = _build_rustworkx_object(upstream_network)
+    return {"graph": graph, "node_indices": node_indices}
+
+
+def build_usgs_hf_graphs(**context: dict[str, Any]) -> dict[str, Any]:
+    """Builds and processes graphs from NHD data
+
+    Parameters
+    ----------
+    **context : dict
+        Airflow-compatible context containing:
+        - ti : TaskInstance for XCom operations
+        - config : HFConfig with pipeline configuration
+        - task_id : str identifier for this task
+        - run_id : str identifier for this pipeline run
+        - ds : str execution date
+        - execution_date : datetime object
+
+    Returns
+    -------
+    dict[str, Any]
+        The rustworkx graph object and node_indices for the NHD
+    """
+    ti = cast(TaskInstance, context["ti"])
+    flowpaths: pl.DataFrame = ti.xcom_pull(task_id="download", key="usgs_flowpaths")
+    upstream_network = _build_usgs_hf_graph(flowpaths)
     graph, node_indices = _build_rustworkx_object(upstream_network)
     return {"graph": graph, "node_indices": node_indices}

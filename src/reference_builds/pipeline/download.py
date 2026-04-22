@@ -7,9 +7,11 @@ from typing import Any, cast
 import geopandas as gpd
 import pandas as pd
 import polars as pl
+from shapely.geometry import MultiLineString
 
 from reference_builds.configs import ReferenceConfig
 from reference_builds.utils import _validate_and_fix_geometries
+from reference_builds.utils.geometries import _fix_divide_exclaves
 
 logger = logging.getLogger(__name__)
 
@@ -203,4 +205,60 @@ def download_nhd_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
         "nhd_flowpaths": pl.from_pandas(flowpaths.to_wkb()),
         "nhd_divides": pl.from_pandas(catchments.to_wkb()),
         "nhd_connectivity": pl.from_pandas(data["NHDPlusFlowlineVAA"]),
+    }
+
+
+def download_usgs_hf_data(**context: dict[str, Any]) -> dict[str, pl.DataFrame]:
+    """Opens local / downloads for the reference-build process
+
+    Parameters
+    ----------
+    **context : dict
+        Airflow-compatible context containing:
+        - ti : TaskInstance for XCom operations
+        - config : HFConfig with pipeline configuration
+        - task_id : str identifier for this task
+        - run_id : str identifier for this pipeline run
+        - ds : str execution date
+        - execution_date : datetime object
+
+    Returns
+    -------
+    dict[str, pl.DataFrame]
+        The reference flowpath and divides references in memory
+    """
+    cfg = cast(ReferenceConfig, context["config"])
+
+    # find the gpkg files
+    gpkg_files = list(cfg.output_dir.glob(cfg.input_file_regex))
+
+    # load layers
+    flowpaths = _load_and_concat_layers(gpkg_files, layer_name="reference_flowline").to_crs("EPSG:4326")
+
+    flowpaths["geometry"] = flowpaths["geometry"].apply(
+        lambda x: x if x.geom_type == "MultiLineString" else MultiLineString([x])
+    )
+
+    valid_hydroseq = set(flowpaths["hydroseq"].unique())
+    flowpaths.loc[~flowpaths["dnhydroseq"].isin(valid_hydroseq), "dnhydroseq"] = 0
+
+    catchments = _load_and_concat_layers(gpkg_files, layer_name="reference_catchments").to_crs("EPSG:4326")
+
+    flowpaths["dnhydroseq"] = flowpaths["dnhydroseq"].fillna(0)
+
+    hydroseq_lookup = flowpaths.set_index("comid")["hydroseq"].to_dict()
+
+    flowpaths["comid"] = flowpaths["comid"].map(hydroseq_lookup)
+    catchments["COMID"] = catchments["COMID"].map(hydroseq_lookup)
+
+    # filter/validate layers
+    _flowpaths = _validate_and_fix_geometries(flowpaths, geom_type="flowpaths")
+    _flowpaths = _flowpaths[_flowpaths["comid"].isin(catchments["COMID"])]
+
+    catchments = _validate_and_fix_geometries(catchments, geom_type="divides")
+    catchments = _fix_divide_exclaves(catchments.to_crs("EPSG:3338")).to_crs("EPSG:4326")
+
+    return {
+        "usgs_flowpaths": pl.from_pandas(_flowpaths.to_wkb()),
+        "usgs_divides": pl.from_pandas(catchments.to_wkb()),
     }

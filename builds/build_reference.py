@@ -12,8 +12,11 @@ from reference_builds.pipeline import (
     build_geoglows_reference,
     build_nhd_graphs,
     build_nhd_reference,
+    build_usgs_hf_graphs,
+    build_usgs_hf_reference,
     download_geoglows_data,
     download_nhd_data,
+    download_usgs_hf_data,
     write_reference,
 )
 
@@ -58,6 +61,13 @@ def main() -> int:
                 task_id="build_geoglows_graphs", python_callable=build_geoglows_graphs, op_kwargs={}
             )
             runner.run_task(task_id="build_reference", python_callable=build_geoglows_reference, op_kwargs={})
+            runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        elif config.base_dataset == BaseDataset.USGS_HF:
+            runner.run_task(task_id="download", python_callable=download_usgs_hf_data, op_kwargs={})
+            runner.run_task(
+                task_id="build_usgs_hf_graphs", python_callable=build_usgs_hf_graphs, op_kwargs={}
+            )
+            runner.run_task(task_id="build_reference", python_callable=build_usgs_hf_reference, op_kwargs={})
             runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
         else:
             raise NotImplementedError("Base Dataset not implemented")

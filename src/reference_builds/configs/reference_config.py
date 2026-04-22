@@ -16,6 +16,7 @@ class BaseDataset(str, Enum):
 
     NHD = "nhd"
     GEOGLOWS = "geoglows"
+    USGS_HF = "usgs-reference-hf"
 
 
 class ReferenceConfig(BaseModel):
@@ -70,14 +71,16 @@ class ReferenceConfig(BaseModel):
     )
 
     output_reference_divides_path: Path = Field(
-        default_factory=lambda data: data["output_dir"]
-        / f"{data['domain']}_{__version__}_reference_divides.parquet",
+        default_factory=lambda data: (
+            data["output_dir"] / f"{data['domain']}_{__version__}_reference_divides.parquet"
+        ),
         description="Save directory for the domain's reference divides",
     )
 
     output_reference_flowpaths_path: Path = Field(
-        default_factory=lambda data: data["output_dir"]
-        / f"{data['domain']}_{__version__}_reference_flowpaths.parquet",
+        default_factory=lambda data: (
+            data["output_dir"] / f"{data['domain']}_{__version__}_reference_flowpaths.parquet"
+        ),
         description="Save directory for the domain's reference flowpaths",
     )
 
