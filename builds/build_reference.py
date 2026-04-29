@@ -1,0 +1,86 @@
+"""An end-to-end build file that will take the NHD ReferenceConfig and turn it into a reference fabric"""
+
+import argparse
+import logging
+
+from pydantic import ValidationError
+
+from reference_builds.configs import BaseDataset, ReferenceConfig
+from reference_builds.local_runner import LocalRunner
+from reference_builds.pipeline import (
+    build_geoglows_graphs,
+    build_geoglows_reference,
+    build_nhd_graphs,
+    build_nhd_reference,
+    build_usgs_hf_graphs,
+    build_usgs_hf_reference,
+    download_geoglows_data,
+    download_nhd_data,
+    download_usgs_hf_data,
+    write_reference,
+)
+
+logger = logging.getLogger(__name__)
+
+
+def main() -> int:
+    """Main entry point for the hydrofabric-build pipeline CLI.
+
+    Returns
+    -------
+    int
+        Exit code: 0 for success, 1 for failure.
+    """
+    parser = argparse.ArgumentParser(description="A local runner for hydrofabric data processing")
+    parser.add_argument("--config", required=False, help="Config file")
+    args = parser.parse_args()
+
+    try:
+        config = ReferenceConfig.from_yaml(args.config)
+    except ValidationError as e:
+        print("Configuration validation failed:")
+        for error in e.errors():
+            print(f"  {error['loc']}: {error['msg']}")
+        return 1
+    except FileNotFoundError:
+        logger.error(f"Config file not found: {args.config}")
+        return 1
+    except TypeError as e:
+        logger.error("Config file not specified.")
+        raise TypeError("Config file not specified.") from e
+
+    with LocalRunner(config) as runner:
+        if config.base_dataset == BaseDataset.NHD:
+            runner.run_task(task_id="download", python_callable=download_nhd_data, op_kwargs={})
+            runner.run_task(task_id="build_nhd_graphs", python_callable=build_nhd_graphs, op_kwargs={})
+            runner.run_task(task_id="build_reference", python_callable=build_nhd_reference, op_kwargs={})
+            runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        elif config.base_dataset == BaseDataset.GEOGLOWS:
+            runner.run_task(task_id="download", python_callable=download_geoglows_data, op_kwargs={})
+            runner.run_task(
+                task_id="build_geoglows_graphs", python_callable=build_geoglows_graphs, op_kwargs={}
+            )
+            runner.run_task(task_id="build_reference", python_callable=build_geoglows_reference, op_kwargs={})
+            runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        elif config.base_dataset == BaseDataset.USGS_HF:
+            runner.run_task(task_id="download", python_callable=download_usgs_hf_data, op_kwargs={})
+            runner.run_task(
+                task_id="build_usgs_hf_graphs", python_callable=build_usgs_hf_graphs, op_kwargs={}
+            )
+            runner.run_task(task_id="build_reference", python_callable=build_usgs_hf_reference, op_kwargs={})
+            runner.run_task(task_id="write_reference", python_callable=write_reference, op_kwargs={})
+        else:
+            raise NotImplementedError("Base Dataset not implemented")
+
+        print("Pipeline completed")
+        print("=" * 60)
+        for task_id, info in runner.results.items():
+            status = "✓" if info["status"] == "success" else "✗"
+            print(f"  {status} {task_id}: {info['status']}")
+        print("=" * 60)
+
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
