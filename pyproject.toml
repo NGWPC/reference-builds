@@ -17,18 +17,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [
+  { name = "Brodie Alexander", email = "Brodie.A.Alexander@rtx.com" },
   { name = "Tadd Bindas", email = "tadd.bindas@ertcorp.com" },
-  { name = "Daniel Cumpton", email = "dcumpton@rtx.com" },
   { name = "Quercus Hamlin", email = "qhamlin@asrcfederal.com" },
-  { name = "Brock Hinkson", email = "brock.w.hinkson@rtx.com" },
+  { name = "Dylan Lee", email = "dylan.lee@entarian.com" },
   { name = "Farshid Rahmani", email = "Farshid.Rahmani@rtx.com" },
 ]
 maintainers = [
-  { name = "Tadd Bindas", email = "tadd.bindas@ertcorp.com" },
-  { name = "Daniel Cumpton", email = "dcumpton@rtx.com" },
+  { name = "Brodie Alexander", email = "Brodie.A.Alexander@rtx.com" },
   { name = "Quercus Hamlin", email = "qhamlin@asrcfederal.com" },
-  { name = "Brock Hinkson", email = "brock.w.hinkson@rtx.com" },
-  { name = "Farshid Rahmani", email = "Farshid.Rahmani@rtx.com" },
+  { name = "Dylan Lee", email = "dylan.lee@entarian.com" },
 ]
 
 dependencies = [
