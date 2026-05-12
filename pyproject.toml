@@ -62,22 +62,15 @@ dev = [
   "types-PyYaml",
   "types-requests==2.32.4.20250611",
 ]
-examples = [
-    "ipykernel==6.29.5",
-    "jupyterlab==4.4.3"
-]
-tests = [
-    "pytest==8.4.1",
-    "pytest-cov==6.1.1",
-    "astropy==7.1.0"
-]
+examples = ["ipykernel==6.29.5", "jupyterlab==4.4.3"]
+tests = ["pytest==8.4.1", "pytest-cov==6.1.1", "astropy==7.1.0"]
 
 [tool.uv]
 default-groups = ["dev", "examples", "tests"]
 
 [tool.ruff]
 line-length = 110
-exclude = [".csv", "LICENSE", ".tf", ".tfvars"]
+exclude = [".csv", "LICENSE", ".tf", ".tfvars", "_version.py"]
 lint.select = [
   "F",      # Errors detected by Pyflakes
   "E",      # Error detected by Pycodestyle
@@ -145,7 +138,7 @@ warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 filterwarnings = [
-    "ignore::DeprecationWarning:pyogrio",
-    "ignore:The 'shapely.geos' module is deprecated:DeprecationWarning",
-    "ignore:The behavior of DataFrame concatenation with empty or all-NA entries is deprecated:FutureWarning",
+  "ignore::DeprecationWarning:pyogrio",
+  "ignore:The 'shapely.geos' module is deprecated:DeprecationWarning",
+  "ignore:The behavior of DataFrame concatenation with empty or all-NA entries is deprecated:FutureWarning",
 ]
