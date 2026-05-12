@@ -478,6 +478,7 @@ class TestTraceAttributes:
             "dnhydroseq",
             "hydroseq",
             "streamorder",
+            "terminalpa",
             "fcode_description",
             "geometry",
         }
