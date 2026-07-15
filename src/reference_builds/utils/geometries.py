@@ -107,7 +107,7 @@ def _drop_exclaves(geom: Geometry) -> Geometry:
 
 def _find_exclaves(geom: Geometry) -> pd.Series:
     """Find and exclude non-contiguous parts of MultiPolygons, appending them to a list to be resolved later"""
-    exclaves = []
+    exclaves: list = []
     if geom.geom_type != "MultiPolygon":
         return pd.Series(data={"geometry": geom, "exclaves": exclaves}, index=["geometry", "exclaves"])
 
